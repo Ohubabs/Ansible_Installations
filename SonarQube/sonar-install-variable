@@ -1,0 +1,92 @@
+ name: Install and configure SonarQube and Nexus
+  hosts: your_server
+  become: true
+
+  vars:
+    sonarqube_version: 9.2.1
+    sonarqube_jdbc_url: "jdbc:postgresql://localhost/sonarqube"
+    sonarqube_jdbc_user: "sonarqube"
+    sonarqube_jdbc_password: "sonarqube_password"
+    nexus_version: 3.35.0
+    nexus_user: "admin"
+    nexus_password: "admin_password"
+
+  tasks:
+    - name: Install PostgreSQL
+      yum:
+        name: postgresql-server
+        state: present
+
+    - name: Start and enable PostgreSQL service
+      systemd:
+        name: postgresql
+        state: started
+        enabled: true
+
+    - name: Install Java 11
+      yum:
+        name: java-1.8.0-openjdk-devel
+        state: present
+
+    - name: Install SonarQube
+      get_url:
+        url: "https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-{{ sonarqube_version }}.zip"
+        dest: "/tmp/sonarqube-{{ sonarqube_version }}.zip"
+      become: true
+      mode: '0644'
+    - name: Extract SonarQube
+      unarchive:
+        src: "/tmp/sonarqube-{{ sonarqube_version }}.zip"
+        dest: "/opt/"
+        copy: no
+        owner: root
+        group: root
+
+    - name: Configure SonarQube JDBC
+      lineinfile:
+        path: "/opt/sonarqube-{{ sonarqube_version }}/conf/sonar.properties"
+        regexp: "^sonar.jdbc.url=jdbc:postgresql://localhost/sonarqube$"
+        line: "sonar.jdbc.url={{ sonarqube_jdbc_url }}"
+        state: present
+      notify: restart sonarqube
+
+    - name: Create SonarQube database user
+      become_user: postgres
+      postgresql_user:
+        db: sonarqube
+        name: "{{ sonarqube_jdbc_user }}"
+        password: "{{ sonarqube_jdbc_password }}"
+        priv: "sonarqube.*:ALL"
+
+    - name: Install Nexus
+      get_url:
+        url: "https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-unix.tar.gz"
+        dest: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
+      become: true
+      mode: '0644'
+    - name: Extract Nexus
+      unarchive:
+        src: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
+        dest: "/opt/"
+        copy: no
+        owner: root
+        group: root
+
+    - name: Start Nexus service
+      command: "/opt/nexus-{{ nexus_version }}/bin/nexus start"
+
+    - name: Configure Nexus initial admin user
+      uri:
+        url: "http://localhost:8081/service/rest/beta/security/users/admin/change-password"
+        method: PUT
+        body_format: json
+        body: '{ "password": "{{ nexus_password }}" }'
+        headers:
+          Content-Type: "application/json"
+        status_code: 204
+        user: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+
+  handlers:
+    - name: restart sonarqube
+      systemd
