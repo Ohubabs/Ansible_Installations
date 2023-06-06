@@ -8,11 +8,16 @@
       state: present
       update_cache: true
 
-  - name: Change ownership for sonarquebe download in opt directory of Sonar User.
+  - name: Change ownership for docker.
     file:
       path: /home/ubuntu/docker
       owner: ubuntu
       group: ubuntu
       mode: "u+rwx,g+rx,o=rx"
       recurse: yes
+  
+  - name: start jenkins
+    systemd:
+      name: docker
+      state: started
 
