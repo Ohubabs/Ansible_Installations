@@ -3,8 +3,15 @@
 - hosts: all #customize to host of your apache server
   become: true
   tasks:
-    - name: Install Apache HTTP server
-      yum: name=httpd update_cache=yes state=latest
+    - name: Install Apache HTTP server on Ubuntu server
+        tags:
+          - install
+          - start
+      apt:
+        name: apache2
+        state: present
+    #- name: Install Apache HTTP server on RedHat Server
+      #yum: name=httpd update_cache=yes state=latest
     - name: Start HTTP Server
       service: name=httpd enabled=yes state=started
     - name: Insert Index Page #Run this task after editing index.html file.
