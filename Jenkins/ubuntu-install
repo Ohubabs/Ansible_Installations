@@ -1,0 +1,72 @@
+#ref: https://blog.knoldus.com/how-to-install-jenkins-using-ansible-on-ubuntu/
+#key change between ubuntu and redhat setup:
+#Ubuntu uses apt_key vs rpm_key for redhat
+#ubuntu uses apt_repository vs url module for yum
+
+---
+- hosts: jenkins
+  gather_facts: false
+  become: true
+  tasks:
+  - name: install wget
+    apt:
+      name: wget
+      state: present
+
+  - name: install openjdk
+    apt:
+      name: openjdk-11-jdk
+      state: present
+      update_cache: true
+    
+  - name: import jenkins key
+    apt_key:
+      url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key #ref:https://pkg.jenkins.io/debian-stable/
+      state: present
+
+  - name: download jenkins binary into apt repository
+    apt_repository:
+      repo: 'deb https://pkg.jenkins.io/debian-stable binary/' #ref:https://pkg.jenkins.io/debian-stable/
+      state: present
+
+  - name: Update Cache
+    apt:
+      update_cache: true
+      
+  - name: Change ownership to jenkins User.
+    file:
+      path: /etc/apt/sources.list.d/jenkins.list
+      owner: jenkins
+      group: jenkins
+      mode: "u+rwx,g+rx,o=rx"
+      recurse: yes
+     
+  - name: install jenkins
+    apt:
+      name: jenkins
+      state: present
+      update_cache: true
+      
+  - name: enable jenkins
+    systemd:
+      name: jenkins
+      enabled: true
+   
+  - name: start jenkins
+    systemd:
+      name: jenkins
+      state: started
+     
+  - name: sleep for 30 seconds and continue with play
+    wait_for: 
+      delay: 30
+      port: 8080
+    
+  - name: init password jenkin
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    changed_when: false
+    register: result
+    
+  - name: print init password jenkins
+    debug:
+      var: result.stdout
