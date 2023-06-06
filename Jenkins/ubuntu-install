@@ -70,3 +70,4 @@
   - name: print init password jenkins
     debug:
       var: result.stdout
+ ...
