@@ -1,0 +1,8 @@
+---
+- hosts: localhost
+  become: yes
+  tasks:
+  - name: git clone
+    git:
+      repo: 'https://github.com/devopstrainingbanglore/gradle-web-app.git'
+      dest: /home/ansible/gradle-web-app
