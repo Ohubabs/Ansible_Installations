@@ -1,0 +1,40 @@
+---
+- hosts: nexus
+  become: true
+  tasks:
+  - name: Create Nexus User
+    user:
+      name: nexus
+      create_home: true
+      shell: /bin/bash
+      comment: "Nexus Management Account"
+      expires: -1
+      password: Gunners23
+  
+  - name: Deploy Local User SSH Key
+    authorized_key:
+      user: nexus
+      state: present
+      manage_dir: true
+      key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"
+  
+  - name: Setup Sudo Access for Nexus User
+    copy:
+      dest: /etc/sudoers.d/nexus
+      content: 'nexus ALL=(ALL) NOPASSWD: ALL' 
+      validate: /usr/sbin/visudo -cf %s
+  
+  - name: Enable Password Authentication
+    lineinfile:
+       dest=/etc/ssh/sshd_config
+       regexp='^PasswordAuthentication'
+       line="PasswordAuthentication yes"
+       state=present
+       backup=yes
+    notify:
+       - restart ssh  
+  handlers:
+  - name: restart ssh
+    service:
+      name: sshd
+      state: restarted
