@@ -1,1 +1,9 @@
-
+---
+- hosts: eks
+  become: true
+  tasks:
+  - name: copy cluster.yml to eks server
+    copy: src=cluster.yml dest=/home/eks/
+    
+  - name: Create Public Cluster
+    command: "eksctl create cluster -f cluster.yml" 
