@@ -1,0 +1,92 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: Public-Cluster
+  region: us-east-1
+
+iam:
+  withOIDC: true
+  serviceAccounts:
+  - metadata:
+      name: EBS-Service-Role
+      namespace: kube-system
+    wellKnownPolicies:
+        ebsCSIController: true
+    roleName: AmazonEKS_EBS_CSI_DriverRole
+    roleOnly: true
+managedNodeGroups:
+  - name: Public-Worker
+    instanceType: t3.medium
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 4
+    volumeSize: 20
+    ssh:
+      publicKeyName: EKSKEY
+    iam:
+      withAddonPolicies:
+          imageBuilder: true
+          autoscaler: true
+          cloudWatch: true
+          ebs: true
+          awsLoadBalancerController: true
+          appMesh: true
+          appMeshPreview: true
+          externalDNS: true
+          certManager: true
+addons:
+  - name: vpc-cni 
+  - name: aws-ebs-csi-driver
+      
+#ref: https://eksctl.io/usage/iam-policies/
+#ref: https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html
+#ref: https://eksctl.io/usage/schema/
+#ref: https://eksctl.io/usage/schema/#managedNodeGroups-iam-withAddonPolicies-awsLoadBalancerController
+#ref: https://eksctl.io/usage/addons/
+ 
+ # Additional IAM policies
+  fsx: true
+  efs: true
+  xRay: true
+
+ # Custom VPC
+ vpc:
+  subnets:
+    private: # or public
+      us-west-2b:
+        id: subnet-0818beec303f8419b
+      us-west-2c:
+        id: subnet-0d42ef09490805e2a
+      us-west-2d:
+        id: subnet-0da7418077077c5f9
+  
+
+  
+  # Alternative
+  
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: eksdemo2
+  region: us-east-1
+
+iam:
+  withOIDC: true
+
+managedNodeGroups:
+  - name: PublicWorker
+    instanceType: t3.medium
+    desiredCapacity: 2
+    minSize: 2
+    maxSize: 4
+    volumeSize: 20
+    ssh: # use existing EC2 key
+      publicKeyName: EKSKEY
+
+addons:
+  - name: asg
+  - name: external-dns
+  - name: full-ecr
+  - name: appmesh
+  - name: alb-ingress 
