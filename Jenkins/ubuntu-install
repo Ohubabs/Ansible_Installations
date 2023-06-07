@@ -17,7 +17,7 @@
     apt:
       name: openjdk-11-jdk
       state: present
-      update_cache: true
+      
     
   - name: import jenkins key
     apt_key:
@@ -35,7 +35,7 @@
       
   - name: Change ownership to jenkins User.
     file:
-      path: /etc/apt/sources.list.d/jenkins.list
+      path: /etc/apt/sources.list.d/jenkins.list/
       owner: jenkins
       group: jenkins
       mode: "u+rwx,g+rx,o=rx"
