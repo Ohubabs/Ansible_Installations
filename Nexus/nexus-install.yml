@@ -61,15 +61,30 @@
   - name: Make nexus into a service
     command: sudo ln -s /home/ansible/opt/nexus-3.51.0-01/bin/nexus /etc/systemd/nexus
     
-  - name: enable nexus service
-    systemd: 
-       name:nexus 
-       enabled: yes
+  - name: Start nexus
+    command: /home/ansible/opt/nexus-3.51.0-01/bin/nexus start
+
+  - name: Nexus status
+    command: /home/ansible/opt/nexus-3.51.0-01/bin/nexus status 
   
-  - name: start nexus service
-    systemd: 
-      name: nexus 
-      state: started
+  - name: Display Nexus Password
+    shell: cat /home/ansible/opt/sonatype-work/nexus3/admin.password
+    changed_when: false
+    register: result
+
+  - name: print Nexus Password
+    debug:
+      var: result.stdout
+    
+  #- name: enable nexus service
+    #systemd: 
+      # name: nexus 
+      # enabled: yes
+  
+ # - name: start nexus service
+  #  systemd: 
+   #   name: nexus 
+    #  state: started
 
 ---
 - hosts: nexus
@@ -136,6 +151,15 @@
 
   - name: Nexus status
     command: /home/ansible/opt/nexus-3.51.0-01/bin/nexus status 
+  
+  - name: Display Nexus Password
+    shell: cat /home/ansible/opt/sonatype-work/nexus3/admin.password
+    changed_when: false
+    register: result
+
+  - name: print Nexus Password
+    debug:
+      var: result.stdout
     
   #- name: enable nexus service
     #systemd: 
