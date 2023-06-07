@@ -1,6 +1,63 @@
 #After creating Sonar/Ansible User with SSH keys and updating default/custom hosts file
 #Need to re-practice with database inclusion. Note as of 06/06/23
 
+#With Ansible User
+---
+- hosts: sonar
+  become: true
+  tasks:
+  - name: Install list of packages
+    apt: 
+      name: '{{item}}' 
+      state: present
+    with_items:
+      - wget
+      - unzip
+    ignore_errors: true
+      
+  - name: Make into opt directory in Ansible User #If different user, edit accordingly.
+    shell:
+      cmd: mkdir opt 
+  
+  - name: Change into opt directory in Ansible User #If different user, edit accordingly.
+    shell:
+      cmd: cd opt
+      
+  - name: Change ownership for opt directory in Sonar User. 
+    file:
+      path: /home/ansible/opt/
+      owner: ansible
+      group: ansible
+      mode: "u+rwx,g+rx,o=rx"
+      recurse: yes
+      
+  - name: install JDK 11 in opt directory of Sonar User
+    apt:
+      name: openjdk-11-jdk
+      state: present
+
+  - name: Download and Unzip Sonarqube into the opt directory of Ansible User
+    unarchive:
+      src: https://binaries.sonarsource.com/Distribution/sonarqube/sonarqube-9.1.0.47736.zip
+      dest: /home/ansible/opt/ #Remember to end path with "/" so it will be a directory i.e. /home/sonar/opt/ vs /home/sonar/opt
+      remote_src: yes
+
+  - name: Change ownership for sonarquebe download in opt directory of Sonar User.
+    file:
+      path: /home/ansible/opt/sonarqube-9.1.0.47736
+      owner: ansible
+      group: ansible
+      mode: "u+rwx,g+rx,o=rx"
+      recurse: yes
+
+  - name: Start Sonarqube
+    shell: /home/ansible/opt/sonarqube-9.1.0.47736/bin/linux-x86-64/sonar.sh start
+
+  - name: Sonarqube Status
+    shell: /home/ansible/opt/sonarqube-9.1.0.47736/bin/linux-x86-64/sonar.sh status
+
+#With Sonar User
+
 ---
 - hosts: sonar
   become: true
