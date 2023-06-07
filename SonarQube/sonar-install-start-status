@@ -17,7 +17,8 @@
       
   - name: Make into opt directory in Ansible User #If different user, edit accordingly.
     shell:
-      cmd: mkdir opt 
+      cmd: mkdir opt
+    ignore_errors: true
   
   - name: Change into opt directory in Ansible User #If different user, edit accordingly.
     shell:
@@ -30,6 +31,10 @@
       group: ansible
       mode: "u+rwx,g+rx,o=rx"
       recurse: yes
+      
+  - name: Update Cache
+    apt:
+      update_cache: true
       
   - name: install JDK 11 in opt directory of Sonar User
     apt:
