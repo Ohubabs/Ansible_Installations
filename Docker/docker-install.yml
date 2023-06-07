@@ -7,7 +7,7 @@
     apt:
       update_cache: true
       
-  - name: install JDK 11
+  - name: install JDK 11 #Needed to connect Docker server to Jenkins
     apt:
       name: openjdk-11-jdk
       state: present
