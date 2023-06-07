@@ -2,7 +2,11 @@
 ---
 - hosts: docker
   become: true
-  tasks:         
+  tasks: 
+   - name: Update Cache
+    apt:
+      update_cache: true
+      
   - name: install JDK 11
     apt:
       name: openjdk-11-jdk
