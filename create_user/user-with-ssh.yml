@@ -10,7 +10,7 @@
       shell: /bin/bash
       comment: "Ansible Management Account"
       expires: -1
-      password: "{{ 'DevOps@2020' | password_hash('sha512','A512') }}"
+      password: "{{ 'Gunners2023' | password_hash('sha512','A512') }}"
   - name: Deploy Local User SSH Key
     authorized_key:
       user: ansible
@@ -22,11 +22,11 @@
       dest: /etc/sudoers.d/ansible
       content: 'ansible ALL=(ALL) NOPASSWD: ALL' 
       validate: /usr/sbin/visudo -cf %s
-  -  name: Disable Password Authentication
+  -  name: Enable Password Authentication
      lineinfile:
         dest=/etc/ssh/sshd_config
         regexp='^PasswordAuthentication'
-        line="PasswordAuthentication no"
+        line="PasswordAuthentication yes"
         state=present
         backup=yes
      notify:
