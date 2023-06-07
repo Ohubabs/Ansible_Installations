@@ -1,7 +1,41 @@
 ---
+---
 - hosts: docker
   become: true
   tasks:         
+  - name: install JDK 11
+    apt:
+      name: openjdk-11-jdk
+      state: present
+      
+  - name: install Docker
+    apt:
+      name: docker
+      state: present
+      update_cache: true
+
+  - name: Change ownership for docker.
+    file:
+      path: /home/ansible/docker
+      owner: ansible
+      group: ansible
+      mode: "u+rwx,g+rx,o=rx"
+      recurse: yes
+  
+  - name: start docker
+    systemd:
+      name: docker
+      state: started
+#ubuntu user
+---
+- hosts: docker
+  become: true
+  tasks:         
+  - name: install JDK 11
+    apt:
+      name: openjdk-11-jdk
+      state: present
+      
   - name: install Docker
     apt:
       name: docker
