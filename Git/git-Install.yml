@@ -2,4 +2,5 @@
   become: yes
   tasks:
    - name: Install Git
-     yum: name=git state=present
+     apt: name=git state=present
+     #yum: name=git state=present for Redhat server
