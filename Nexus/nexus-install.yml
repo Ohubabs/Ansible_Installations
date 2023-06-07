@@ -71,10 +71,10 @@
       state: started
        
   #- name: Start nexus
-    command: /home/nexus/opt/nexus-3.51.0-01/bin/nexus start
+    #command: /home/nexus/opt/nexus-3.51.0-01/bin/nexus start
 
   #- name: Nexus status
-    command: /home/nexus/opt/nexus-3.51.0-01/bin/nexus status 
+    #command: /home/nexus/opt/nexus-3.51.0-01/bin/nexus status 
 
 ---
 
