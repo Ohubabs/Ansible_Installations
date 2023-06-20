@@ -1,0 +1,145 @@
+#Create Terraform User
+#Remember to still create necessary IAM roles with needed policies for eks cluster creation
+
+---
+- hosts: terraform
+  become: true
+  tasks:
+  - name: Create Devops Terraform User
+    user:
+      name: terraform
+      create_home: true
+      shell: /bin/bash
+      comment: "Terraform Management Account"
+      expires: -1
+      password: "{{ 'Gunners23' | password_hash('sha512','A512') }}"
+  - name: Deploy Local User SSH Key
+    authorized_key:
+      user: terraform
+      state: present
+      manage_dir: true
+      key: "{{ lookup('file', '/home/ansible/.ssh/id_rsa.pub') }}"
+  - name: Setup Sudo Access for Devops User
+    copy:
+      dest: /etc/sudoers.d/terraform
+      content: 'terraform ALL=(ALL) NOPASSWD: ALL'
+      validate: /usr/sbin/visudo -cf %s
+  -  name: Disable Password Authentication
+     lineinfile:
+        dest=/etc/ssh/sshd_config
+        regexp='^PasswordAuthentication'
+        line="PasswordAuthentication yes"
+        state=present
+        backup=yes
+     notify:
+       - restart ssh
+  handlers:
+  - name: restart ssh
+    service:
+      name=sshd
+
+#Installation
+
+---
+- hosts: terraform
+  become: true
+  tasks: 
+  - name: Install list of packages
+    apt: 
+      name: '{{item}}' 
+      state: present
+    with_items:
+      - unzip
+  
+  - name: Unzip AWS CLI 2
+    unarchive:
+      src: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+      dest: /home/terraform/
+      remote_src: yes
+  
+  - name: Change ownership for opt directory in Terraform User.
+    file:
+      path: /home/terraform/./aws/install/
+      owner: terraform
+      group: terraform
+      mode: "u+rwx,g+rx,o=rx"
+      recurse: yes
+
+  - name: Install AWS CLI 2
+    command: ./aws/install
+
+  - name: Update cache
+    apt:
+      update_cache: true
+
+  - name: Install Terraform
+    unarchive:
+      src: https://releases.hashicorp.com/terraform/1.4.5/terraform_1.4.5_linux_amd64.zip #ref: https://developer.hashicorp.com/terraform/downloads & https://releases.hashicorp.com/terraform/
+      dest: /usr/local/bin
+      remote_src: yes
+
+  - name: Change ownership to Terraform User.
+    file:
+      path: /usr/local/bin/terraform_1.4.5/
+      owner: terraform
+      group: terraform
+      mode: "u+rwx,g+rx,o=rx"
+      recurse: yes
+
+  - name: Update cache
+    apt:
+      update_cache: true
+
+---
+
+# vars file for terraform in Linux system
+terraform_pkg_url: "https://releases.hashicorp.com/terraform/{{ terraform_version_to_install }}/terraform_{{ terraform_version_to_install }}_{{ os_type }}_{{ base_arch[ansible_architecture] | default('amd64') }}.zip"
+terraform_default_path: /usr/local/bin/
+os_type: linux
+
+# vars file for ansible-role-terraform
+base_arch:
+  i386: '386'
+  x86_64: 'amd64'
+  amd64: 'amd64'
+  aarch64: 'arm64'
+  armv7l: 'arm'
+  armv6l: 'arm'
+
+base_os:
+  Linux: 'Linux-Unix'
+
+# tasks file for install terraform on Linux and Unix system
+
+- name: Linux/Unix | Find all versions of Terraform
+  uri:
+    url: https://releases.hashicorp.com/terraform/index.json
+    return_content: yes
+  register: terraform_index
+  when: terraform_version == "latest"
+  check_mode: no
+
+- name: Linux/Unix | Finds the latest Terraform version when latest var is define
+  set_fact:
+    terraform_version_to_install: "{{ (terraform_index.content | from_json).versions | reject('search','-') | list | sort_versions | last }}"
+  when: terraform_version == 'latest'
+
+- name: Linux/Unix | Use the specified Terraform version when latest var is not define
+  set_fact:
+    terraform_version_to_install: "{{ terraform_version }}"
+  when: terraform_version != 'latest'
+
+# This task avoids downloading Terraform every time
+- name: Linux/Unix | Check if Terraform is present with the right version
+  command: "{{ terraform_path }}/terraform -version"
+  register: terraform_installed_version
+  ignore_errors: yes
+  changed_when: false
+  failed_when: false
+
+- name: Linux/Unix | Install Terraform
+  unarchive:
+    src: "{{ terraform_pkg_url }}"
+    dest: "{{ terraform_path }}"
+    remote_src: yes
+  when: terraform_version_to_install not in ( terraform_installed_version.stdout_lines | default(['empty'], true) | first )
