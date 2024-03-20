@@ -9,4 +9,3 @@ sudo su - ansible
 sudo apt update -y
 sudo apt-add-repository ppa:ansible/ansible
 sudo apt install ansible -y
-sudo chown ansible:ansible -R /etc/ansible/
