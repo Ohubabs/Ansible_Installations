@@ -1,0 +1,17 @@
+- hosts: docker
+  become: true
+  tasks:
+  - name: Create Docker User
+    user:
+      name: docker
+      create_home: true
+      shell: /bin/bash
+      comment: "Docker Management Account"
+      expires: -1
+      password: "{{ 'Gunners2023' | password_hash('sha512','A512') }}"
+  - name: Deploy Local User SSH Key
+    authorized_key:
+      user: docker
+      state: present
+      manage_dir: true
+      key: "{{ lookup('file', '/home/docker/.ssh/id_rsa.pub') }}"
