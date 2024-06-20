@@ -8,7 +8,7 @@
       shell: /bin/bash
       comment: "Docker Management Account"
       expires: -1
-      password: "{{ 'Gunners2023' | password_hash('sha512','A512') }}"
+      password: "{{ '' | password_hash('sha512','A512') }}"
   - name: Deploy Local User SSH Key
     authorized_key:
       user: docker
